@@ -38,7 +38,7 @@ const progressBar = document.getElementById('progress-bar');
 // Initialize Firebase
 function initializeFirebase() {
     try {
-        console.log('🔥 Initializing Firebase...');
+        console.log('Initializing Firebase...');
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
@@ -47,13 +47,13 @@ function initializeFirebase() {
         // Add a timeout fallback to hide loading after 5 seconds
         setTimeout(() => {
             if (loadingState && !loadingState.classList.contains('hidden')) {
-                console.log('⏰ TIMEOUT: FORCE HIDE');
+                console.log(' TIMEOUT: FORCE HIDE');
                 hideLoading();
             }
         }, 5000);
         
         // Immediately try to authenticate
-        console.log('🔐 Starting authentication...');
+        console.log('Starting authentication...');
         
         signInAnonymously(auth)
             .then((result) => {
@@ -87,7 +87,7 @@ function hideLoading() {
     
     // Jangan log berkali-kali
     if (loading && !loading.classList.contains('hidden')) {
-        console.log('🔥 HIDING LOADING...');
+        console.log('HIDING LOADING...');
         loading.classList.add('hidden');
         console.log('LOADING HIDDEN');
     }
@@ -100,6 +100,34 @@ function hideLoading() {
 
 // Notification System
 function showNotification(message, type = 'info', duration = 5000) {
+    // Global notification deduplication
+    if (!window.notificationCache) window.notificationCache = new Map();
+    
+    const notifKey = `${message}-${type}`;
+    const now = Date.now();
+    
+    // Check if identical notification was shown recently (within 1 second)
+    if (window.notificationCache.has(notifKey)) {
+        const lastTime = window.notificationCache.get(notifKey);
+        if (now - lastTime < 1000) {
+            console.log('Duplicate notification blocked:', message);
+            return null; // Block duplicate
+        }
+    }
+    
+    // Record this notification
+    window.notificationCache.set(notifKey, now);
+    
+    // Clean old entries every 50 notifications
+    if (window.notificationCache.size > 50) {
+        const cutoff = now - 10000; // 10 seconds ago
+        for (const [key, time] of window.notificationCache.entries()) {
+            if (time < cutoff) {
+                window.notificationCache.delete(key);
+            }
+        }
+    }
+    
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     
@@ -232,6 +260,22 @@ function clearDraft() {
     taskDraft = {};
 }
 
+function resetTaskForm() {
+    // Clear all form inputs
+    if (taskInput) taskInput.value = '';
+    if (notesInput) notesInput.value = '';
+    if (deadlineInput) deadlineInput.value = '';
+    if (priorityInput) priorityInput.value = 'Sedang';
+    
+    // Clear draft
+    clearDraft();
+    
+    // Focus back to task input
+    if (taskInput) taskInput.focus();
+    
+    console.log('Form reset completed');
+}
+
 function showAutoSaveIndicator() {
     let indicator = document.getElementById('auto-save-indicator');
     if (!indicator) {
@@ -290,7 +334,7 @@ function isOverdue(dateString) {
 function initializeTheme() {
     const updateIcon = () => {
         const isDark = document.documentElement.classList.contains('dark');
-        console.log('🔥 Theme is:', isDark ? 'DARK' : 'LIGHT');
+        console.log('Theme is:', isDark ? 'DARK' : 'LIGHT');
         
         // Make sure elements exist
         if (!moonIcon || !sunIcon) {
@@ -319,7 +363,7 @@ function initializeTheme() {
         if (html.classList.contains('dark')) {
             html.classList.remove('dark');
             localStorage.setItem('theme', 'light');
-            console.log('💡 SWITCHED TO LIGHT');
+            console.log('SWITCHED TO LIGHT');
         } else {
             html.classList.add('dark');
             localStorage.setItem('theme', 'dark');
@@ -541,30 +585,62 @@ async function handleTaskAction(e) {
                 showNotification('Tugas berhasil dihapus', 'success');
             });
         } else if (type === 'status') {
+            // Only handle change events, not clicks
+            if (e.type === 'click') return;
+            
             // Get original value to compare
             const originalKey = `${id}-status`;
             const originalValue = originalValues.get(originalKey);
             
             // Only update and notify if value actually changed
             if (target.value !== originalValue) {
-                await updateDoc(taskRef, { status: target.value });
-                const message = target.value === 'Sudah Dikerjakan' ? 
-                    'Selamat! Tugas selesai!' : 
-                    'Status tugas diperbarui';
-                showNotification(message, 'success', 3000);
-                // Update stored value
-                originalValues.set(originalKey, target.value);
+                // Simple processing lock
+                if (!window.processing) window.processing = new Set();
+                const lockKey = `status-${id}`;
+                
+                if (window.processing.has(lockKey)) return;
+                window.processing.add(lockKey);
+                
+                try {
+                    await updateDoc(taskRef, { status: target.value });
+                    
+                    const message = target.value === 'Sudah Dikerjakan' ? 
+                        'Selamat! Tugas selesai!' : 
+                        'Status tugas diperbarui';
+                    showNotification(message, 'success', 3000);
+                    
+                    // Update stored value
+                    originalValues.set(originalKey, target.value);
+                } finally {
+                    setTimeout(() => window.processing.delete(lockKey), 500);
+                }
             }
         } else if (type === 'priority') {
+            // Only handle change events, not clicks
+            if (e.type === 'click') return;
+            
             // Get original value to compare
             const originalKey = `${id}-priority`;
             const originalValue = originalValues.get(originalKey);
             
-            // Only update if value actually changed (no notification for priority)
+            // Only update if value actually changed
             if (target.value !== originalValue) {
-                await updateDoc(taskRef, { priority: target.value });
-                // Update stored value
-                originalValues.set(originalKey, target.value);
+                // Simple processing lock
+                if (!window.processing) window.processing = new Set();
+                const lockKey = `priority-${id}`;
+                
+                if (window.processing.has(lockKey)) return;
+                window.processing.add(lockKey);
+                
+                try {
+                    await updateDoc(taskRef, { priority: target.value });
+                    showNotification(`Prioritas diubah ke ${target.value}`, 'info', 2000);
+                    
+                    // Update stored value
+                    originalValues.set(originalKey, target.value);
+                } finally {
+                    setTimeout(() => window.processing.delete(lockKey), 500);
+                }
             }
         }
     } catch (error) {
@@ -580,8 +656,9 @@ async function addTask(e) {
     const text = taskInput?.value?.trim();
     const notes = notesInput?.value?.trim() || '';
     const deadline = deadlineInput?.value || '';
+    const priority = priorityInput?.value || 'Sedang';
     
-    console.log('Form data:', { text, notes, deadline });
+    console.log('Form data:', { text, notes, deadline, priority });
     
     if (!text) {
         console.log('No task text entered');
@@ -602,7 +679,7 @@ async function addTask(e) {
             text: text,
             notes: notes,
             deadline: deadline,
-            priority: priorityInput?.value || 'Sedang',
+            priority: priority,
             status: 'Belum Dikerjakan',
             createdAt: new Date()
         };
@@ -611,13 +688,10 @@ async function addTask(e) {
         renderTasks(tasks);
         updateStatistics(tasks);
         
-        // Clear form
-        taskInput.value = '';
-        if (notesInput) notesInput.value = '';
-        if (deadlineInput) deadlineInput.value = '';
-        if (priorityInput) priorityInput.value = 'Sedang';
+        // Clear form and focus
+        resetTaskForm();
         
-        alert('Tugas disimpan offline! (Firebase rules error)');
+        showNotification('Tugas disimpan offline! (Firebase connection issue)', 'warning');
         return;
     }
     
@@ -651,21 +725,24 @@ async function addTask(e) {
         const docRef = await addDoc(tasksCollectionRef, newTask);
         console.log('TASK SAVED! ID:', docRef.id);
         
-        // Reset form
-        taskInput.value = '';
-        if (notesInput) notesInput.value = '';
-        if (deadlineInput) deadlineInput.value = '';
-        if (priorityInput) priorityInput.value = 'Sedang';
-        
-        // Clear draft
-        clearDraft();
-        
-        // Focus back to input
-        taskInput.focus();
+        // Reset form and clear draft
+        resetTaskForm();
+        showNotification('Tugas berhasil ditambahkan!', 'success');
         
     } catch (error) {
         console.error('SAVE ERROR:', error);
-        alert('GAGAL SAVE: ' + error.message);
+        
+        // Still reset form even on error
+        resetTaskForm();
+        
+        // Show user-friendly error message
+        if (error.code === 'permission-denied') {
+            showNotification('Tidak ada izin untuk menyimpan tugas. Periksa koneksi Firebase.', 'error');
+        } else if (error.code === 'unavailable') {
+            showNotification('Firebase tidak tersedia. Coba lagi nanti.', 'error');
+        } else {
+            showNotification('Gagal menyimpan tugas: ' + error.message, 'error');
+        }
     } finally {
         // Restore button
         if (submitBtn) {
@@ -762,8 +839,14 @@ function setupEventListeners() {
         console.error('Task form not found!');
     }
     
+    // Use change for dropdowns (status/priority) and click for buttons (delete)
     document.body.addEventListener('change', handleTaskAction);
-    document.body.addEventListener('click', handleTaskAction);
+    document.body.addEventListener('click', (e) => {
+        // Only handle click for delete buttons, not dropdowns
+        if (e.target.closest('[data-type="delete"]')) {
+            handleTaskAction(e);
+        }
+    });
     
     // Auto-save draft functionality
     [taskInput, notesInput, deadlineInput, priorityInput].forEach(input => {
@@ -790,11 +873,7 @@ function setupEventListeners() {
         
         // Escape to clear form
         if (e.key === 'Escape') {
-            taskInput.value = '';
-            notesInput.value = '';
-            deadlineInput.value = '';
-            priorityInput.value = 'Sedang';
-            clearDraft();
+            resetTaskForm();
             taskInput.focus();
         }
     });

@@ -27,19 +27,19 @@ jobs:
       run: |
         echo "Validating HTML structure..."
         if [ ! -f "index.html" ]; then
-          echo "❌ index.html not found!"
+          echo "index.html not found!"
           exit 1
         fi
-        echo "✅ HTML validation passed"
+        echo "HTML validation passed"
         
     - name: Test Firebase Config
       run: |
         echo "Testing Firebase configuration..."
         if [ ! -f "src/js/config.js" ]; then
-          echo "❌ Firebase config not found!"
+          echo "Firebase config not found!"
           exit 1
         fi
-        echo "✅ Firebase config found"
+        echo "Firebase config found"
         
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
