@@ -261,7 +261,7 @@ function clearDraft() {
 }
 
 function resetTaskForm() {
-    console.log('Resetting form...');
+    console.log('Resetting form... (called from:', (new Error()).stack.split('\n')[2].trim(), ')');
     
     // Clear all form inputs
     if (taskInput) {
@@ -584,7 +584,7 @@ function getStatusClasses(status) {
 }
 
 // Task Rendering
-function renderDesktopTask(task) {
+function renderDesktopTask(task, taskNumber) {
     const deadlineText = formatDate(task.deadline);
     const isTaskOverdue = isOverdue(task.deadline);
     const tr = document.createElement('tr');
@@ -617,6 +617,14 @@ function renderDesktopTask(task) {
     `;
     
     tr.innerHTML = `
+        <td class="px-4 py-4 text-center">
+            <span class="task-number inline-flex items-center justify-center w-6 h-6 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-full">
+                ${taskNumber}
+            </span>
+            <input type="checkbox" class="task-checkbox hidden rounded border-gray-300 dark:border-gray-600 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+                   data-id="${task.id}" 
+                   title="Pilih tugas untuk dihapus">
+        </td>
         <td class="px-6 py-4 text-sm font-medium">${taskContent}</td>
         <td class="px-6 py-4 text-sm">
             <div class="flex items-center gap-2 group">
@@ -679,14 +687,6 @@ function renderDesktopTask(task) {
                                         ${parseMarkdownLinks(task.notes)}
                                     </div>
                                 </div>
-                                <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded" 
-                                        data-type="toggle-details" 
-                                        data-id="${task.id}" 
-                                        title="Tutup detail">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                                    </svg>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -815,9 +815,9 @@ function renderTasks(tasks) {
             return priorityOrder[b.priority] - priorityOrder[a.priority];
         });
 
-        tasks.forEach(task => {
+        tasks.forEach((task, index) => {
             // Render for desktop
-            taskListDesktop.appendChild(renderDesktopTask(task));
+            taskListDesktop.appendChild(renderDesktopTask(task, index + 1));
             
             // Render for mobile
             taskListMobile.appendChild(renderMobileTask(task));
@@ -950,7 +950,7 @@ async function handleTaskAction(e) {
 
 async function addTask(e) {
     e.preventDefault();
-    console.log('Form submitted!');
+    console.log('Form submitted!', 'Event type:', e.type, 'isTrusted:', e.isTrusted);
     
     const text = taskInput?.value?.trim();
     const notes = notesInput?.value?.trim() || '';
@@ -1082,12 +1082,12 @@ function setupFirebaseListeners(userId) {
         console.log('Created tasks collection reference');
         
         // LANGSUNG HIDE LOADING
-        console.log('🔥 FORCE HIDE LOADING NOW!');
+        console.log('FORCE HIDE LOADING NOW!');
         hideLoading();
         
         // BACKUP: Force hide after 2 seconds
         setTimeout(() => {
-            console.log('🚨 BACKUP HIDE LOADING');
+            console.log('BACKUP HIDE LOADING');
             hideLoading();
         }, 2000);
         
@@ -1111,7 +1111,7 @@ function setupFirebaseListeners(userId) {
             
         }, (error) => {
             console.error('SNAPSHOT ERROR:', error);
-            console.log('🚨 FIREBASE RULES ERROR - CHECK FIRESTORE RULES!');
+            console.log('FIREBASE RULES ERROR - CHECK FIRESTORE RULES U Dumbass >w<!');
             
             // Force show container even with error
             hideLoading();
@@ -1133,7 +1133,7 @@ function setupFirebaseListeners(userId) {
 
 // Event Listeners
 function setupEventListeners() {
-    console.log('🔌 Setting up event listeners...');
+    console.log('Setting up event listeners...');
     
     if (taskForm) {
         taskForm.addEventListener('submit', addTask);
@@ -1191,7 +1191,12 @@ function setupEventListeners() {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
             if (taskInput.value.trim()) {
-                taskForm.dispatchEvent(new Event('submit'));
+                // Create proper submit event like normal form submission
+                const submitEvent = new Event('submit', {
+                    bubbles: true,
+                    cancelable: true
+                });
+                taskForm.dispatchEvent(submitEvent);
             }
         }
         
@@ -1201,6 +1206,324 @@ function setupEventListeners() {
             taskInput.focus();
         }
     });
+    
+    // Bulk delete functionality
+    setupBulkDeleteListeners();
+}
+
+// Bulk Delete Functionality
+function setupBulkDeleteListeners() {
+    const toggleSelectionBtn = document.getElementById('toggle-selection-mode');
+    const selectAllBtn = document.getElementById('select-all-btn');
+    const deselectAllBtn = document.getElementById('deselect-all-btn');
+    const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+    const bulkActionsBar = document.getElementById('bulk-actions-bar');
+    const selectionCount = document.getElementById('selection-count');
+    
+    let isSelectionMode = false;
+    
+    // Handle toggle selection mode with single/double click
+    if (toggleSelectionBtn) {
+        let clickCount = 0;
+        let clickTimer = null;
+        
+        toggleSelectionBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            clickCount++;
+            
+            if (clickCount === 1) {
+                // Single click - wait to see if double click
+                clickTimer = setTimeout(() => {
+                    // Single click confirmed - toggle selection mode
+                    const taskContainer = document.getElementById('task-container');
+                    const currentlyInSelectionMode = taskContainer?.classList.contains('selection-mode');
+                    
+                    if (currentlyInSelectionMode) {
+                        // Exit selection mode
+                        isSelectionMode = false;
+                        toggleSelectionMode(isSelectionMode);
+                    } else {
+                        // Enter selection mode
+                        isSelectionMode = true;
+                        toggleSelectionMode(isSelectionMode);
+                    }
+                    clickCount = 0;
+                }, 250); // Reduced timeout for better responsiveness
+            } else if (clickCount === 2) {
+                // Double click detected - clear single click timer
+                clearTimeout(clickTimer);
+                clickCount = 0;
+                
+                const taskContainer = document.getElementById('task-container');
+                const currentlyInSelectionMode = taskContainer?.classList.contains('selection-mode');
+                
+                if (currentlyInSelectionMode) {
+                    // Double click in selection mode - toggle select all
+                    const checkboxes = document.querySelectorAll('.task-checkbox');
+                    const checked = document.querySelectorAll('.task-checkbox:checked');
+                    
+                    if (checked.length === checkboxes.length && checkboxes.length > 0) {
+                        // All selected, deselect all
+                        checkboxes.forEach(checkbox => checkbox.checked = false);
+                        console.log('Double click: Deselected all tasks');
+                    } else {
+                        // Not all selected, select all
+                        checkboxes.forEach(checkbox => checkbox.checked = true);
+                        console.log('Double click: Selected all tasks');
+                    }
+                    updateBulkSelectionUI();
+                } else {
+                    // Double click when not in selection mode - enter selection mode and select all
+                    isSelectionMode = true;
+                    toggleSelectionMode(isSelectionMode);
+                    
+                    // Wait a bit for DOM to update, then select all
+                    setTimeout(() => {
+                        const checkboxes = document.querySelectorAll('.task-checkbox');
+                        checkboxes.forEach(checkbox => checkbox.checked = true);
+                        updateBulkSelectionUI();
+                        console.log('Double click: Entered selection mode and selected all');
+                    }, 50);
+                }
+            }
+        });
+    }
+    
+    // Handle individual checkbox changes
+    document.body.addEventListener('change', (e) => {
+        if (e.target.classList.contains('task-checkbox')) {
+            updateBulkSelectionUI();
+        }
+    });
+    
+    // Handle select all button
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', () => {
+            document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            if (selectAllCheckbox) selectAllCheckbox.checked = true;
+            updateBulkSelectionUI();
+        });
+    }
+    
+    // Handle deselect all button
+    if (deselectAllBtn) {
+        deselectAllBtn.addEventListener('click', () => {
+            document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            if (selectAllCheckbox) selectAllCheckbox.checked = false;
+            updateBulkSelectionUI();
+        });
+    }
+    
+    // Handle exit selection button
+    const exitSelectionBtn = document.getElementById('exit-selection-btn');
+    if (exitSelectionBtn) {
+        exitSelectionBtn.addEventListener('click', () => {
+            isSelectionMode = false;
+            toggleSelectionMode(isSelectionMode);
+        });
+    }
+    
+    // Handle bulk delete button
+    if (bulkDeleteBtn) {
+        bulkDeleteBtn.addEventListener('click', () => {
+            const selectedTasks = getSelectedTasks();
+            if (selectedTasks.length > 0) {
+                showBulkDeleteModal(selectedTasks);
+            }
+        });
+    }
+}
+
+function toggleSelectionMode(isActive) {
+    const taskContainer = document.getElementById('task-container');
+    const toggleBtn = document.getElementById('toggle-selection-mode');
+    const bulkActionsBar = document.getElementById('bulk-actions-bar');
+    
+    if (isActive) {
+        // Enable selection mode
+        taskContainer?.classList.add('selection-mode');
+        toggleBtn?.classList.add('active');
+        
+        // Show bulk actions bar if any tasks are selected
+        const selectedCount = document.querySelectorAll('.task-checkbox:checked').length;
+        if (selectedCount > 0) {
+            bulkActionsBar?.classList.remove('hidden');
+        }
+        
+        // Update icon to show "active" state
+        if (toggleBtn) {
+            const svg = toggleBtn.querySelector('svg');
+            if (svg) {
+                svg.innerHTML = `<path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z"/>`;
+                svg.classList.add('text-purple-600', 'dark:text-purple-400');
+                svg.classList.remove('text-gray-500', 'dark:text-gray-400');
+            }
+        }
+    } else {
+        // Disable selection mode
+        taskContainer?.classList.remove('selection-mode');
+        toggleBtn?.classList.remove('active');
+        bulkActionsBar?.classList.add('hidden');
+        
+        // Clear all selections
+        document.querySelectorAll('.task-checkbox:checked').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        
+        // Reset icon to default state
+        if (toggleBtn) {
+            const svg = toggleBtn.querySelector('svg');
+            if (svg) {
+                svg.innerHTML = `<path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"/>`;
+                svg.classList.remove('text-purple-600', 'dark:text-purple-400');
+                svg.classList.add('text-gray-500', 'dark:text-gray-400');
+            }
+        }
+    }
+    
+    updateBulkSelectionUI();
+}
+
+function updateBulkSelectionUI() {
+    const checkboxes = document.querySelectorAll('.task-checkbox');
+    const checked = document.querySelectorAll('.task-checkbox:checked');
+    const bulkActionsBar = document.getElementById('bulk-actions-bar');
+    const selectionCount = document.getElementById('selection-count');
+    const toggleBtn = document.getElementById('toggle-selection-mode');
+    const taskContainer = document.getElementById('task-container');
+    
+    // Only show bulk actions if in selection mode
+    const isSelectionMode = taskContainer?.classList.contains('selection-mode');
+    
+    if (isSelectionMode && checked.length > 0) {
+        bulkActionsBar?.classList.remove('hidden');
+        if (selectionCount) {
+            selectionCount.textContent = `${checked.length} tugas dipilih`;
+        }
+    } else {
+        bulkActionsBar?.classList.add('hidden');
+    }
+    
+    // Update toggle button state based on selection
+    if (toggleBtn && isSelectionMode) {
+        const svg = toggleBtn.querySelector('svg');
+        if (svg) {
+            if (checked.length === checkboxes.length && checkboxes.length > 0) {
+                // All selected - filled circle check dengan purple yang lebih terang
+                svg.innerHTML = `<path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2Z M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z"/>`;
+                svg.classList.add('text-purple-700', 'dark:text-purple-300');
+                svg.classList.remove('text-purple-600', 'dark:text-purple-400');
+            } else if (checked.length > 0) {
+                // Partial selection - dash icon dengan purple 
+                svg.innerHTML = `<path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M8,11V13H16V11H8Z"/>`;
+                svg.classList.add('text-purple-500', 'dark:text-purple-500');
+                svg.classList.remove('text-purple-600', 'dark:text-purple-400', 'text-purple-700', 'dark:text-purple-300');
+            } else {
+                // None selected - active selection mode 
+                svg.innerHTML = `<path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z"/>`;
+                svg.classList.add('text-purple-600', 'dark:text-purple-400');
+                svg.classList.remove('text-purple-700', 'dark:text-purple-300', 'text-purple-500', 'dark:text-purple-500');
+            }
+        }
+    }
+}
+
+function getSelectedTasks() {
+    const selected = [];
+    document.querySelectorAll('.task-checkbox:checked').forEach(checkbox => {
+        const taskId = checkbox.dataset.id;
+        const task = tasks.find(t => t.id === taskId);
+        if (task) {
+            selected.push(task);
+        }
+    });
+    return selected;
+}
+
+function showBulkDeleteModal(selectedTasks) {
+    const modal = document.getElementById('bulk-delete-modal');
+    const countSpan = document.getElementById('bulk-count');
+    const previewList = document.getElementById('bulk-delete-preview');
+    const confirmBtn = document.getElementById('confirm-bulk-delete');
+    const cancelBtn = document.getElementById('cancel-bulk-delete');
+    
+    if (!modal) return;
+    
+    // Update count
+    if (countSpan) countSpan.textContent = selectedTasks.length;
+    
+    // Update preview list
+    if (previewList) {
+        previewList.innerHTML = selectedTasks.map(task => `
+            <li class="flex items-center gap-2 p-2 bg-white dark:bg-gray-600 rounded border">
+                <svg class="w-3 h-3 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14,2H6A2,2,0,0,0,4,4V20a2,2,0,0,0,2,2H18a2,2,0,0,0,2-2V8ZM18,20H6V4h7V9a1,1,0,0,0,1,1h4Z"/>
+                </svg>
+                <span class="text-sm">${task.text}</span>
+            </li>
+        `).join('');
+    }
+    
+    // Show modal
+    modal.classList.remove('hidden');
+    
+    // Handle confirm
+    const handleConfirm = async () => {
+        try {
+            await deleteBulkTasks(selectedTasks);
+            modal.classList.add('hidden');
+            showNotification(`${selectedTasks.length} tugas berhasil dihapus`, 'success');
+        } catch (error) {
+            showNotification('Gagal menghapus tugas: ' + error.message, 'error');
+        }
+        cleanup();
+    };
+    
+    // Handle cancel
+    const handleCancel = () => {
+        modal.classList.add('hidden');
+        cleanup();
+    };
+    
+    // Handle backdrop click
+    const handleBackdropClick = (e) => {
+        if (e.target === modal) {
+            handleCancel();
+        }
+    };
+    
+    const cleanup = () => {
+        confirmBtn?.removeEventListener('click', handleConfirm);
+        cancelBtn?.removeEventListener('click', handleCancel);
+        modal.removeEventListener('click', handleBackdropClick);
+    };
+    
+    // Add event listeners
+    confirmBtn?.addEventListener('click', handleConfirm);
+    cancelBtn?.addEventListener('click', handleCancel);
+    modal.addEventListener('click', handleBackdropClick);
+}
+
+async function deleteBulkTasks(selectedTasks) {
+    const promises = selectedTasks.map(task => {
+        if (tasksCollectionRef) {
+            const taskRef = doc(tasksCollectionRef, task.id);
+            return deleteDoc(taskRef);
+        }
+        return Promise.resolve();
+    });
+    
+    await Promise.all(promises);
+    
+    // Clear selection
+    document.querySelectorAll('.task-checkbox:checked').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateBulkSelectionUI();
 }
 
 // Edit deadline function
@@ -1488,7 +1811,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // FORCE HIDE LOADING setelah 3 detik jika masih ada
     setTimeout(() => {
-        console.log('🚨 FINAL FORCE HIDE LOADING');
+        console.log('FINAL FORCE HIDE LOADING');
         hideLoading();
     }, 3000);
     

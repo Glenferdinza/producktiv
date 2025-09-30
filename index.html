@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Productiv</title>
+    <title>Producktiv</title>
     <meta name="description" content="Modern task management app with Firebase backend. Manage tasks, set priorities, track progress with dark/light mode.">
     <meta name="keywords" content="task manager, productivity, firebase, todo app, task tracking">
     <meta name="author" content="Glenferdinza">
@@ -41,7 +41,7 @@
 
         <!-- Header -->
         <header class="mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-100 text-center">Productiv</h1>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-100 text-center">Producktiv</h1>
             <p class="text-gray-500 dark:text-gray-400 text-center mt-2">Reminder & Task Management</p>
         </header>
 
@@ -130,12 +130,48 @@
         <section>
              <div id="loading-state" class="text-center py-10"><p class="dark:text-white">Memuat data...</p></div>
             <div id="task-container" class="hidden">
-                <div class="hidden sm:block overflow-x-auto">
-                    <div class="min-w-full inline-block align-middle">
-                        <div class="overflow-hidden border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+                <!-- Bulk Actions Bar -->
+                <div id="bulk-actions-bar" class="hidden bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 mb-4">
+                    <div class="flex items-center justify-between">
+                        <span id="selection-count" class="text-sm font-medium text-blue-800 dark:text-blue-200">0 tugas dipilih</span>
+                        <div class="flex items-center gap-2">
+                            <button id="exit-selection-btn" class="text-xs px-3 py-1.5 bg-gray-400 text-white rounded-md hover:bg-gray-500 transition-colors flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                                </svg>
+                                Keluar
+                            </button>
+                            <button id="select-all-btn" class="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                                Pilih Semua
+                            </button>
+                            <button id="deselect-all-btn" class="text-xs px-3 py-1.5 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors">
+                                Batal Pilih
+                            </button>
+                            <button id="bulk-delete-btn" class="text-xs px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M19,7H16V6a3,3,0,0,0-3-3H11A3,3,0,0,0,8,6V7H5A1,1,0,0,0,5,9H6V19a3,3,0,0,0,3,3h6a3,3,0,0,0,3-3V9h1a1,1,0,0,0,0-2ZM10,6a1,1,0,0,1,1-1h2a1,1,0,0,1,1,1V7H10Zm6,13a1,1,0,0,1-1,1H9a1,1,0,0,1-1-1V9h8Z"/>
+                                </svg>
+                                Hapus Terpilih
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="hidden sm:block">
+                    <!-- Scrollable container with max height -->
+                    <div class="max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+                        <div class="min-w-full inline-block align-middle">
+                            <div class="overflow-hidden">
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                <thead class="bg-gray-100 dark:bg-gray-700">
+                                <thead class="bg-gray-100 dark:bg-gray-700 sticky top-0">
                                     <tr>
+                                        <th scope="col" class="px-4 py-3 text-left">
+                                            <button id="toggle-selection-mode" title="Klik: Masuk/keluar mode seleksi | Double klik: Pilih semua tugas" class="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors group relative">
+                                                <svg class="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"/>
+                                                </svg>
+                                            </button>
+                                        </th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             <div class="flex items-center gap-2">
                                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -246,55 +282,88 @@
         </section>
 
         <!-- Footer -->
-        <footer class="mt-12 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <div class="text-center text-gray-500 dark:text-gray-400">
-                <div class="flex items-center justify-center gap-2 mb-2">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2ZM12,20a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"/>
-                        <path d="M12,6A1,1,0,0,0,11,7V12a1,1,0,0,0,.29.71l3,3A1,1,0,0,0,15.71,15L13,12.41V7A1,1,0,0,0,12,6Z"/>
-                    </svg>
-                    <p class="text-sm">
-                        <strong>Productiv</strong> - Task Management System
-                    </p>
-                </div>
-                <div class="flex items-center justify-center gap-1 text-xs">
-                   <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2ZM12,20a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"/>
-                        <path d="M12,7A1,1,0,0,0,11,8V12a1,1,0,0,0,.29.71l3,3A1,1,0,0,0,15.71,15L13,12.41V8A1,1,0,0,0,12,7Z"/>
-                    </svg>
+        <footer class="mt-12 pt-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div class="px-6 pb-6">
+                <div class="flex items-center justify-center gap-1 text-xs text-gray-600 dark:text-gray-400">
                     <span>Copyright &copy; 2025</span>
                     <a href="https://github.com/Glenferdinza" 
                        target="_blank" 
                        rel="noopener noreferrer"
-                       class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors">
+                       class="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 font-medium transition-colors">
                         Glenferdinza
                     </a>
                     <span>- All rights reserved</span>
                 </div>
-                <div class="mt-2 text-xs text-gray-400 dark:text-gray-500">
-                    <div class="flex items-center justify-center gap-4">
+                <div class="mt-3 text-xs text-gray-500 dark:text-gray-500">
+                    <div class="flex items-center justify-center gap-4 flex-wrap">
                         <span class="flex items-center gap-1">
-                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-3 h-3 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12,0.3c-6.6,0-12,5.4-12,12c0,5.3,3.4,9.8,8.2,11.4C8.8,23.5,9,23.1,9,22.8c0-0.3,0-1.3,0-2.3c-3.3,0.7-4-1.4-4-1.4c-0.5-1.3-1.3-1.6-1.3-1.6c-1.1-0.7,0.1-0.7,0.1-0.7c1.2,0.1,1.8,1.2,1.8,1.2c1.1,1.8,2.8,1.3,3.5,1c0.1-0.8,0.4-1.3,0.8-1.6c-2.7-0.3-5.5-1.3-5.5-5.9c0-1.3,0.5-2.4,1.2-3.2C5.5,8.8,5,7.6,5.7,6c0,0,1-0.3,3.3,1.2c1-0.3,2-0.4,3-0.4s2,0.1,3,0.4C17.3,5.7,18.3,6,18.3,6c0.7,1.6,0.2,2.8,0.1,3.1c0.8,0.8,1.2,1.9,1.2,3.2c0,4.6-2.8,5.6-5.5,5.9c0.4,0.4,0.8,1.1,0.8,2.2c0,1.6,0,2.9,0,3.3c0,0.3,0.2,0.7,0.8,0.6C20.6,22.1,24,17.6,24,12.3C24,5.7,18.6,0.3,12,0.3z"/>
                             </svg>
-                            <a href="https://github.com/Glenferdinza/productiv" 
+                            <a href="https://github.com/Glenferdinza/producktiv" 
                                target="_blank" 
                                rel="noopener noreferrer"
-                               class="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                               class="text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                                 Open Source
                             </a>
                         </span>
-                        <span>•</span>
+                        <span class="text-gray-400 dark:text-gray-600">•</span>
                         <span class="flex items-center gap-1">
-                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-3 h-3 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10s10-4.48,10-10S17.52,2,12,2z M13,17h-2v-6h2V17z M13,9h-2V7h2V9z"/>
                             </svg>
-                            <span>Built with Firebase & Tailwind CSS</span>
+                            <span class="text-gray-500 dark:text-gray-500">Built with Love >w<</span>
                         </span>
                     </div>
                 </div>
             </div>
         </footer>
+    </div>
+
+    <!-- Bulk Delete Confirmation Modal -->
+    <div id="bulk-delete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full mx-4 transform transition-all">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-600">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19,7H16V6a3,3,0,0,0-3-3H11A3,3,0,0,0,8,6V7H5A1,1,0,0,0,5,9H6V19a3,3,0,0,0,3,3h6a3,3,0,0,0,3-3V9h1a1,1,0,0,0,0-2ZM10,6a1,1,0,0,1,1-1h2a1,1,0,0,1,1,1V7H10Zm6,13a1,1,0,0,1-1,1H9a1,1,0,0,1-1-1V9h8Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        Konfirmasi Hapus Massal
+                    </h3>
+                </div>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="p-6">
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    Apakah Anda yakin ingin menghapus <span id="bulk-count" class="font-bold text-red-600 dark:text-red-400">0</span> tugas yang dipilih?
+                    <span class="text-red-600 dark:text-red-400 font-medium block mt-1">Tindakan ini tidak dapat dibatalkan.</span>
+                </p>
+                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 max-h-48 overflow-y-auto">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Tugas yang akan dihapus:</p>
+                    <ul id="bulk-delete-preview" class="space-y-1 text-sm text-gray-900 dark:text-gray-100"></ul>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-600">
+                <button id="cancel-bulk-delete" 
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                    Batal
+                </button>
+                <button id="confirm-bulk-delete" 
+                        class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 rounded-md transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19,7H16V6a3,3,0,0,0-3-3H11A3,3,0,0,0,8,6V7H5A1,1,0,0,0,5,9H6V19a3,3,0,0,0,3,3h6a3,3,0,0,0,3-3V9h1a1,1,0,0,0,0-2ZM10,6a1,1,0,0,1,1-1h2a1,1,0,0,1,1,1V7H10Zm6,13a1,1,0,0,1-1,1H9a1,1,0,0,1-1-1V9h8Z"/>
+                    </svg>
+                    Hapus Semua
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Custom Delete Confirmation Modal -->

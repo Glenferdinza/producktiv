@@ -402,3 +402,51 @@ html:not(.dark) #theme-toggle:hover {
 #delete-modal:not(.hidden) > div {
     animation: modalSlideIn 0.2s ease-out;
 }
+
+/* Selection Mode Styling */
+.task-number {
+    display: flex;
+}
+
+.task-checkbox {
+    display: none;
+}
+
+.selection-mode .task-number {
+    display: none;
+}
+
+.selection-mode .task-checkbox {
+    display: block;
+}
+
+.selection-mode #toggle-selection-mode svg {
+    color: rgb(147 51 234) !important;
+}
+
+.dark .selection-mode #toggle-selection-mode svg {
+    color: rgb(196 181 253) !important;
+}
+
+/* Icon animation when selection mode is active */
+#toggle-selection-mode {
+    position: relative;
+}
+
+#toggle-selection-mode.active {
+    background-color: rgb(245 243 255);
+    transform: scale(1.05);
+}
+
+.dark #toggle-selection-mode.active {
+    background-color: rgb(88 28 135 / 0.3);
+}
+
+/* Hover effects for selection button */
+#toggle-selection-mode:hover {
+    transform: scale(1.05);
+}
+
+#toggle-selection-mode:active {
+    transform: scale(0.95);
+}
