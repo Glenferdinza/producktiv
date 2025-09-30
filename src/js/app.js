@@ -297,6 +297,161 @@ function resetTaskForm() {
     console.log('Form reset completed');
 }
 
+// Embedded Link functionality
+function handleEmbedLink() {
+    const start = notesInput.selectionStart;
+    const end = notesInput.selectionEnd;
+    
+    // Check if text is selected
+    if (start === end) {
+        showNotification('Pilih teks yang ingin dijadikan link!', 'warning', 3000);
+        notesInput.focus();
+        return;
+    }
+    
+    const selectedText = notesInput.value.substring(start, end);
+    
+    // Create custom modal for URL input
+    showLinkModal(selectedText, (url) => {
+        // Validate URL
+        if (!url || !isValidURL(url)) {
+            showNotification('URL tidak valid!', 'error', 3000);
+            return;
+        }
+        
+        // Create markdown-style link
+        const linkText = `[${selectedText}](${url})`;
+        
+        // Replace selected text with link
+        const beforeText = notesInput.value.substring(0, start);
+        const afterText = notesInput.value.substring(end);
+        notesInput.value = beforeText + linkText + afterText;
+        
+        // Trigger input event for auto-save
+        notesInput.dispatchEvent(new Event('input'));
+        
+        // Show success message
+        showNotification('Link berhasil ditambahkan!', 'success', 2000);
+        
+        // Focus back to textarea
+        notesInput.focus();
+        
+        // Set cursor position after the inserted link
+        const newCursorPos = start + linkText.length;
+        notesInput.setSelectionRange(newCursorPos, newCursorPos);
+    });
+}
+
+// URL validation function
+function isValidURL(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+// Parse markdown-style links and convert to HTML
+function parseMarkdownLinks(text) {
+    if (!text) return text;
+    
+    // Regex to match [text](url) format
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    
+    return text.replace(linkRegex, (match, linkText, url) => {
+        // Validate URL
+        if (isValidURL(url)) {
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline transition-colors">${linkText}</a>`;
+        }
+        // If URL is invalid, return original text
+        return match;
+    });
+}
+
+// Show link input modal
+function showLinkModal(selectedText, onConfirm) {
+    // Create modal HTML
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50';
+    modal.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 transform transition-all">
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8,12a1,1,0,0,0,1,1h6a1,1,0,0,0,0-2H9A1,1,0,0,0,8,12ZM12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm0,18a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Buat Link</h3>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Teks terpilih:</label>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-sm text-gray-900 dark:text-gray-100 font-medium">"${selectedText}"</div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">URL Link:</label>
+                    <input type="url" id="link-url-input" placeholder="https://example.com" 
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="flex justify-end gap-3">
+                    <button id="cancel-link" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                        Batal
+                    </button>
+                    <button id="confirm-link" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8,12a1,1,0,0,0,1,1h6a1,1,0,0,0,0-2H9A1,1,0,0,0,8,12ZM12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm0,18a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"/>
+                        </svg>
+                        Buat Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Get elements
+    const urlInput = modal.querySelector('#link-url-input');
+    const cancelBtn = modal.querySelector('#cancel-link');
+    const confirmBtn = modal.querySelector('#confirm-link');
+    
+    // Focus on URL input
+    urlInput.focus();
+    
+    // Handle cancel
+    const closeModal = () => {
+        modal.remove();
+    };
+    
+    cancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    
+    // Handle confirm
+    const handleConfirm = () => {
+        const url = urlInput.value.trim();
+        if (url) {
+            onConfirm(url);
+            closeModal();
+        }
+    };
+    
+    confirmBtn.addEventListener('click', handleConfirm);
+    urlInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleConfirm();
+        }
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+}
+
 function showAutoSaveIndicator() {
     let indicator = document.getElementById('auto-save-indicator');
     if (!indicator) {
@@ -336,10 +491,21 @@ function formatDate(dateString) {
         return 'Besok';
     } else if (date.getTime() === yesterday.getTime()) {
         return 'Kemarin';
-    } else if (date < today) {
-        return `<svg class="w-4 h-4 inline mr-1 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.44L19.53 19H4.47L12 5.44z"/><path d="M11 10h2v4h-2zm0 6h2v2h-2z"/></svg>${date.toLocaleDateString('id-ID')}`;
     } else {
-        return `<svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 11h2v2H7zm0 4h2v2H7zm4-4h2v2h-2zm0 4h2v2h-2zm4-4h2v2h-2zm0 4h2v2h-2z"/><path d="M5 22h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2zM19 8H5v12h14V8z"/></svg>${date.toLocaleDateString('id-ID')}`;
+        // Format: "Rabu, 10 Desember 2025"
+        const options = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        const formattedDate = date.toLocaleDateString('id-ID', options);
+        
+        if (date < today) {
+            return `<svg class="w-4 h-4 inline mr-1 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.44L19.53 19H4.47L12 5.44z"/><path d="M11 10h2v4h-2zm0 6h2v2h-2z"/></svg>${formattedDate}`;
+        } else {
+            return formattedDate;
+        }
     }
 }
 
@@ -428,21 +594,44 @@ function renderDesktopTask(task) {
     
     tr.className = `hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${rowClass}`;
     
-    const taskContent = task.notes ? 
-        `<div>
-            <div class="${task.status === 'Sudah Dikerjakan' ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-900 dark:text-gray-200'}">${task.text}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
-                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14,2H6A2,2,0,0,0,4,4V20a2,2,0,0,0,2,2H18a2,2,0,0,0,2-2V8ZM18,20H6V4h7V9a1,1,0,0,0,1,1h4Z"/>
-                </svg>
-                ${task.notes}
+    // Clean display - hanya nama tugas, catatan bisa di-expand inline
+    const taskContent = `
+        <div class="w-full">
+            <div class="${task.status === 'Sudah Dikerjakan' ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-900 dark:text-gray-200'} font-medium">
+                ${task.text}
             </div>
-        </div>` :
-        `<div class="${task.status === 'Sudah Dikerjakan' ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-900 dark:text-gray-200'}">${task.text}</div>`;
+            ${task.notes ? `
+                <button class="text-xs text-blue-600 dark:text-blue-400 mt-1 opacity-75 hover:opacity-100 transition-opacity flex items-center gap-1" 
+                        data-type="toggle-details" 
+                        data-id="${task.id}">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M14,2H6A2,2,0,0,0,4,4V20a2,2,0,0,0,2,2H18a2,2,0,0,0,2-2V8ZM18,20H6V4h7V9a1,1,0,0,0,1,1h4Z"/>
+                    </svg>
+                    <span class="toggle-text">Ada catatan - Klik untuk detail</span>
+                    <svg class="w-3 h-3 toggle-arrow transition-transform duration-200" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M7 10l5 5 5-5z"/>
+                    </svg>
+                </button>
+            ` : ''}
+        </div>
+    `;
     
     tr.innerHTML = `
         <td class="px-6 py-4 text-sm font-medium">${taskContent}</td>
-        <td class="px-6 py-4 text-sm ${isTaskOverdue && task.status !== 'Sudah Dikerjakan' ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-600 dark:text-gray-400'}">${deadlineText}</td>
+        <td class="px-6 py-4 text-sm">
+            <div class="flex items-center gap-2 group">
+                <span class="text-xs ${isTaskOverdue && task.status !== 'Sudah Dikerjakan' ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-600 dark:text-gray-400'}">${deadlineText}</span>
+                <button class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 rounded transition-all duration-200"
+                        data-type="edit-deadline" 
+                        data-id="${task.id}" 
+                        data-deadline="${task.deadline || ''}"
+                        title="Edit deadline">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                </button>
+            </div>
+        </td>
         <td class="px-6 py-4">
             <select class="custom-select text-xs font-semibold rounded-md p-1.5 border focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-400 transition ${getPriorityClasses(task.priority)}" data-type="priority" data-id="${task.id}">
                 <option value="Rendah" ${task.priority === 'Rendah' ? 'selected' : ''}>Rendah</option>
@@ -468,7 +657,50 @@ function renderDesktopTask(task) {
     // Store original values for change detection
     originalValues.set(`${task.id}-priority`, task.priority);
     originalValues.set(`${task.id}-status`, task.status);
-    
+    originalValues.set(`${task.id}-deadline`, task.deadline);
+
+    // Buat detail row jika ada catatan
+    if (task.notes) {
+        const detailRow = document.createElement('tr');
+        detailRow.className = `task-detail-row hidden ${rowClass}`;
+        detailRow.setAttribute('data-task-id', task.id);
+        detailRow.innerHTML = `
+            <td colspan="5" class="px-6 py-0">
+                <div class="detail-content overflow-hidden transition-all duration-300 max-h-0">
+                    <div class="py-4 border-t border-gray-200 dark:border-gray-700">
+                        <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2,0,0,0,4,4V20a2,2,0,0,0,2,2H18a2,2,0,0,0,2-2V8ZM18,20H6V4h7V9a1,1,0,0,0,1,1h4Z"/>
+                                </svg>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-200 mb-2">Catatan:</h4>
+                                    <div class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                                        ${parseMarkdownLinks(task.notes)}
+                                    </div>
+                                </div>
+                                <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded" 
+                                        data-type="toggle-details" 
+                                        data-id="${task.id}" 
+                                        title="Tutup detail">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        `;
+        
+        // Return container dengan kedua row
+        const container = document.createDocumentFragment();
+        container.appendChild(tr);
+        container.appendChild(detailRow);
+        return container;
+    }
+
     return tr;
 }
 
@@ -485,7 +717,19 @@ function renderMobileTask(task) {
     card.innerHTML = `
         <!-- Task Header -->
         <div class="flex justify-between items-start mb-3">
-            <h3 class="font-bold text-lg flex-1 ${task.status === 'Sudah Dikerjakan' ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-900 dark:text-gray-200'}">${task.text}</h3>
+            <div class="flex-1 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors" onclick="showTaskDetail('${task.id}')">
+                <h3 class="font-bold text-lg ${task.status === 'Sudah Dikerjakan' ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-900 dark:text-gray-200'}">
+                    ${task.text}
+                </h3>
+                ${task.notes ? `
+                    <div class="text-xs text-blue-600 dark:text-blue-400 mt-1 opacity-75">
+                        <svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14,2H6A2,2,0,0,0,4,4V20a2,2,0,0,0,2,2H18a2,2,0,0,0,2-2V8ZM18,20H6V4h7V9a1,1,0,0,0,1,1h4Z"/>
+                        </svg>
+                        Ada catatan - Tap untuk detail
+                    </div>
+                ` : ''}
+            </div>
             <button class="ml-2 text-gray-400 hover:text-red-600 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition-all flex-shrink-0" data-type="delete" data-id="${task.id}" title="Hapus tugas">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M19,7H16V6a3,3,0,0,0-3-3H11A3,3,0,0,0,8,6V7H5A1,1,0,0,0,5,9H6V19a3,3,0,0,0,3,3h6a3,3,0,0,0,3-3V9h1a1,1,0,0,0,0-2ZM10,6a1,1,0,0,1,1-1h2a1,1,0,0,1,1,1V7H10Zm6,13a1,1,0,0,1-1,1H9a1,1,0,0,1-1-1V9h8Z"/>
@@ -493,24 +737,26 @@ function renderMobileTask(task) {
             </button>
         </div>
         
-        ${task.notes ? `
-        <div class="mb-3 p-2 bg-gray-50 dark:bg-gray-700/50 rounded text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
-            <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M14,2H6A2,2,0,0,0,4,4V20a2,2,0,0,0,2,2H18a2,2,0,0,0,2-2V8ZM18,20H6V4h7V9a1,1,0,0,0,1,1h4Z"/>
-            </svg>
-            <div>
-                <strong>Catatan:</strong> ${task.notes}
-            </div>
-        </div>
-        ` : ''}
-        
         <!-- Deadline -->
-        <div class="mb-3 text-sm flex items-center gap-2">
-            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19,3H18V1a1,1,0,0,0-2,0V3H8V1A1,1,0,0,0,6,1V3H5A3,3,0,0,0,2,6V19a3,3,0,0,0,3,3H19a3,3,0,0,0,3-3V6A3,3,0,0,0,19,3ZM4,19V9H20V19a1,1,0,0,1-1,1H5A1,1,0,0,1,4,19Z"/>
-            </svg>
-            <span class="font-medium text-gray-600 dark:text-gray-400">Deadline:</span>
-            <span class="${isTaskOverdue && task.status !== 'Sudah Dikerjakan' ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-700 dark:text-gray-300'}">${deadlineText}</span>
+        <div class="mb-3 text-sm">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19,3H18V1a1,1,0,0,0-2,0V3H8V1A1,1,0,0,0,6,1V3H5A3,3,0,0,0,2,6V19a3,3,0,0,0,3,3H19a3,3,0,0,0,3-3V6A3,3,0,0,0,19,3ZM4,19V9H20V19a1,1,0,0,1-1,1H5A1,1,0,0,1,4,19Z"/>
+                    </svg>
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Deadline:</span>
+                    <span class="text-xs ${isTaskOverdue && task.status !== 'Sudah Dikerjakan' ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-600 dark:text-gray-400'}">${deadlineText}</span>
+                </div>
+                <button class="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 rounded transition-all duration-200"
+                        data-type="edit-deadline" 
+                        data-id="${task.id}" 
+                        data-deadline="${task.deadline || ''}"
+                        title="Edit deadline">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                </button>
+            </div>
         </div>
         
         <!-- Controls - Stacked vertically on mobile -->
@@ -549,6 +795,7 @@ function renderMobileTask(task) {
     // Store original values for change detection
     originalValues.set(`${task.id}-priority`, task.priority);
     originalValues.set(`${task.id}-status`, task.status);
+    originalValues.set(`${task.id}-deadline`, task.deadline);
     
     return card;
 }
@@ -656,6 +903,37 @@ async function handleTaskAction(e) {
                 try {
                     await updateDoc(taskRef, { priority: target.value });
                     showNotification(`Prioritas diubah ke ${target.value}`, 'info', 2000);
+                    
+                    // Update stored value
+                    originalValues.set(originalKey, target.value);
+                } finally {
+                    setTimeout(() => window.processing.delete(lockKey), 500);
+                }
+            }
+        } else if (type === 'deadline') {
+            // Only handle change events for deadline inputs
+            if (e.type === 'click') return;
+            
+            // Get original value to compare
+            const originalKey = `${id}-deadline`;
+            const originalValue = originalValues.get(originalKey);
+            
+            // Only update if value actually changed
+            if (target.value !== originalValue) {
+                // Simple processing lock
+                if (!window.processing) window.processing = new Set();
+                const lockKey = `deadline-${id}`;
+                
+                if (window.processing.has(lockKey)) return;
+                window.processing.add(lockKey);
+                
+                try {
+                    await updateDoc(taskRef, { deadline: target.value });
+                    
+                    const deadlineText = target.value ? 
+                        `diperbarui ke ${new Date(target.value).toLocaleDateString('id-ID')}` : 
+                        'dihapus';
+                    showNotification(`Deadline ${deadlineText}`, 'info', 2000);
                     
                     // Update stored value
                     originalValues.set(originalKey, target.value);
@@ -871,6 +1149,19 @@ function setupEventListeners() {
         if (e.target.closest('[data-type="delete"]')) {
             handleTaskAction(e);
         }
+        // Handle edit deadline button clicks
+        if (e.target.closest('[data-type="edit-deadline"]')) {
+            const button = e.target.closest('[data-type="edit-deadline"]');
+            const taskId = button.dataset.id;
+            const currentDeadline = button.dataset.deadline || '';
+            editDeadline(taskId, currentDeadline);
+        }
+        // Handle toggle details button clicks
+        if (e.target.closest('[data-type="toggle-details"]')) {
+            const button = e.target.closest('[data-type="toggle-details"]');
+            const taskId = button.dataset.id;
+            toggleTaskDetails(taskId);
+        }
     });
     
     // Auto-save draft functionality
@@ -886,6 +1177,14 @@ function setupEventListeners() {
     // Load draft on page load
     loadDraft();
     
+    // Embedded Link functionality
+    const embedLinkBtn = document.getElementById('embed-link-btn');
+    if (embedLinkBtn && notesInput) {
+        embedLinkBtn.addEventListener('click', () => {
+            handleEmbedLink();
+        });
+    }
+    
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
         // Ctrl/Cmd + Enter to submit form
@@ -900,6 +1199,273 @@ function setupEventListeners() {
         if (e.key === 'Escape') {
             resetTaskForm();
             taskInput.focus();
+        }
+    });
+}
+
+// Edit deadline function
+function editDeadline(taskId, currentDeadline) {
+    // Create inline date picker modal
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50';
+    modal.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full mx-4 transform transition-all">
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19,3H18V1a1,1,0,0,0-2,0V3H8V1A1,1,0,0,0,6,1V3H5A3,3,0,0,0,2,6V19a3,3,0,0,0,3,3H19a3,3,0,0,0,3-3V6A3,3,0,0,0,19,3ZM4,19V9H20V19a1,1,0,0,1-1,1H5A1,1,0,0,1,4,19Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Edit Deadline</h3>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pilih Tanggal:</label>
+                    <input type="date" id="deadline-edit-input" value="${currentDeadline}" 
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="flex justify-end gap-3">
+                    <button id="cancel-deadline" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                        Batal
+                    </button>
+                    <button id="remove-deadline" class="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-gray-700 border border-red-300 dark:border-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                        Hapus
+                    </button>
+                    <button id="save-deadline" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19,13h-6v6a1,1,0,0,1-2,0V13H5a1,1,0,0,1,0-2h6V5a1,1,0,0,1,2,0v6h6a1,1,0,0,1,0,2Z"/>
+                        </svg>
+                        Simpan
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Get elements
+    const dateInput = modal.querySelector('#deadline-edit-input');
+    const cancelBtn = modal.querySelector('#cancel-deadline');
+    const removeBtn = modal.querySelector('#remove-deadline');
+    const saveBtn = modal.querySelector('#save-deadline');
+    
+    // Focus on date input
+    dateInput.focus();
+    
+    // Handle close
+    const closeModal = () => modal.remove();
+    
+    cancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    
+    // Handle remove deadline
+    removeBtn.addEventListener('click', async () => {
+        try {
+            const taskRef = doc(tasksCollectionRef, taskId);
+            await updateDoc(taskRef, { deadline: '' });
+            showNotification('Deadline berhasil dihapus', 'success', 2000);
+            closeModal();
+        } catch (error) {
+            showNotification('Gagal menghapus deadline', 'error', 3000);
+        }
+    });
+    
+    // Handle save
+    saveBtn.addEventListener('click', async () => {
+        try {
+            const newDate = dateInput.value;
+            const taskRef = doc(tasksCollectionRef, taskId);
+            await updateDoc(taskRef, { deadline: newDate });
+            
+            const message = newDate ? 
+                `Deadline diperbarui ke ${new Date(newDate).toLocaleDateString('id-ID')}` : 
+                'Deadline dihapus';
+            showNotification(message, 'success', 2000);
+            closeModal();
+        } catch (error) {
+            showNotification('Gagal memperbarui deadline', 'error', 3000);
+        }
+    });
+    
+    // Keyboard shortcuts
+    dateInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            saveBtn.click();
+        }
+    });
+}
+
+// Toggle inline task details
+function toggleTaskDetails(taskId) {
+    const detailRow = document.querySelector(`tr.task-detail-row[data-task-id="${taskId}"]`);
+    const toggleButton = document.querySelector(`[data-type="toggle-details"][data-id="${taskId}"]`);
+    
+    if (!detailRow || !toggleButton) return;
+    
+    const detailContent = detailRow.querySelector('.detail-content');
+    const toggleText = toggleButton.querySelector('.toggle-text');
+    const toggleArrow = toggleButton.querySelector('.toggle-arrow');
+    const isExpanded = !detailRow.classList.contains('hidden');
+    
+    if (isExpanded) {
+        // Collapse
+        detailContent.style.maxHeight = '0px';
+        setTimeout(() => {
+            detailRow.classList.add('hidden');
+        }, 300);
+        toggleText.textContent = 'Ada catatan - Klik untuk detail';
+        toggleArrow.style.transform = 'rotate(0deg)';
+    } else {
+        // Expand
+        detailRow.classList.remove('hidden');
+        // Hitung tinggi content untuk animasi smooth
+        const scrollHeight = detailContent.scrollHeight;
+        detailContent.style.maxHeight = scrollHeight + 'px';
+        toggleText.textContent = 'Sembunyikan detail';
+        toggleArrow.style.transform = 'rotate(180deg)';
+    }
+}
+
+// Truncate text function
+function truncateText(text, maxLines = 3) {
+    if (!text) return '';
+    
+    const words = text.split(' ');
+    const wordsPerLine = 8; // Approximate words per line
+    const maxWords = maxLines * wordsPerLine;
+    
+    if (words.length <= maxWords) {
+        return text;
+    }
+    
+    return words.slice(0, maxWords).join(' ') + '...';
+}
+
+// Show task detail modal
+function showTaskDetail(taskId) {
+    // Find task by ID
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    const deadlineText = formatDate(task.deadline);
+    const isTaskOverdue = isOverdue(task.deadline);
+    
+    // Create modal HTML
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50';
+    modal.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto transform transition-all">
+            <div class="sticky top-0 bg-white dark:bg-gray-800 p-6 border-b border-gray-200 dark:border-gray-600 rounded-t-lg">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M14,2H6A2,2,0,0,0,4,4V20a2,2,0,0,0,2,2H18a2,2,0,0,0,2-2V8ZM18,20H6V4h7V9a1,1,0,0,0,1,1h4Z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Detail Tugas</h3>
+                    </div>
+                    <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded transition-colors" onclick="this.closest('.fixed').remove()">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <!-- Task Title -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Judul Tugas:</label>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 text-gray-900 dark:text-gray-100 ${task.status === 'Sudah Dikerjakan' ? 'line-through text-gray-500' : ''}">
+                        ${task.text}
+                    </div>
+                </div>
+                
+                <!-- Notes -->
+                ${task.notes ? `
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Catatan:</label>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
+                        ${parseMarkdownLinks(task.notes)}
+                    </div>
+                </div>
+                ` : ''}
+                
+                <!-- Details Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- Deadline -->
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M19,3H18V1a1,1,0,0,0-2,0V3H8V1A1,1,0,0,0,6,1V3H5A3,3,0,0,0,2,6V19a3,3,0,0,0,3,3H19a3,3,0,0,0,3-3V6A3,3,0,0,0,19,3ZM4,19V9H20V19a1,1,0,0,1-1,1H5A1,1,0,0,1,4,19Z"/>
+                            </svg>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Deadline:</span>
+                        </div>
+                        <p class="text-sm ${isTaskOverdue && task.status !== 'Sudah Dikerjakan' ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-600 dark:text-gray-400'}">${deadlineText}</p>
+                    </div>
+                    
+                    <!-- Priority -->
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12,1L15.09,7.26L22,9L17,14.14L18.18,22L12,18.77L5.82,22L7,14.14L2,9L8.91,7.26Z"/>
+                            </svg>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Prioritas:</span>
+                        </div>
+                        <p class="text-sm">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium ${getPriorityClasses(task.priority).replace('border-gray-300 dark:border-gray-600', '')}">${task.priority}</span>
+                        </p>
+                    </div>
+                    
+                    <!-- Status -->
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M10.3,12.3a1,1,0,0,0,1.4,0L15.29,8.71a1,1,0,1,0-1.41-1.42L11,10.17,9.12,8.29a1,1,0,0,0-1.41,1.42ZM12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm0,18a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"/>
+                            </svg>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</span>
+                        </div>
+                        <p class="text-sm">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium ${getStatusClasses(task.status).replace('border-gray-300 dark:border-gray-600', '')}">${task.status}</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Created Date -->
+                <div class="text-xs text-gray-500 dark:text-gray-400 text-center">
+                    Dibuat pada: ${task.createdAt ? new Date(task.createdAt.seconds ? task.createdAt.seconds * 1000 : task.createdAt).toLocaleDateString('id-ID', {
+                        weekday: 'long',
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }) : 'Tidak diketahui'}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', function escapeHandler(e) {
+        if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', escapeHandler);
         }
     });
 }

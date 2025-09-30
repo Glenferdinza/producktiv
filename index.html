@@ -89,7 +89,23 @@
                 
                 <!-- Row 2: Notes (Optional) -->
                 <div class="grid grid-cols-1 gap-4">
-                    <textarea id="notes-input" placeholder="Catatan tambahan (opsional)" class="w-full px-4 py-3 bg-white dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" rows="2"></textarea>
+                    <div class="relative">
+                        <!-- Embedded Link Button -->
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Catatan Tambahan</label>
+                            <button type="button" id="embed-link-btn" 
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                    title="Blok teks lalu klik untuk membuat link">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8,12a1,1,0,0,0,1,1h6a1,1,0,0,0,0-2H9A1,1,0,0,0,8,12ZM12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm0,18a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"/>
+                                    <path d="M13.5,7.5a1,1,0,0,0-1.41,0L9.21,10.38a1,1,0,0,0,1.41,1.41L13.5,8.91A1,1,0,0,0,13.5,7.5Z"/>
+                                    <path d="M14.79,13.62a1,1,0,0,0-1.41-1.41L10.5,15.09a1,1,0,0,0,1.41,1.41Z"/>
+                                </svg>
+                                Buat Link
+                            </button>
+                        </div>
+                        <textarea id="notes-input" placeholder="Catatan tambahan (opsional)" class="w-full px-4 py-3 bg-white dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" rows="3"></textarea>
+                    </div>
                 </div>
                 
                 <!-- Row 3: Deadline and Priority (Responsive) -->
@@ -242,7 +258,7 @@
                     </p>
                 </div>
                 <div class="flex items-center justify-center gap-1 text-xs">
-                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                   <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2ZM12,20a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"/>
                         <path d="M12,7A1,1,0,0,0,11,8V12a1,1,0,0,0,.29.71l3,3A1,1,0,0,0,15.71,15L13,12.41V8A1,1,0,0,0,12,7Z"/>
                     </svg>
