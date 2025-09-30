@@ -261,17 +261,38 @@ function clearDraft() {
 }
 
 function resetTaskForm() {
+    console.log('Resetting form...');
+    
     // Clear all form inputs
-    if (taskInput) taskInput.value = '';
-    if (notesInput) notesInput.value = '';
-    if (deadlineInput) deadlineInput.value = '';
-    if (priorityInput) priorityInput.value = 'Sedang';
+    if (taskInput) {
+        taskInput.value = '';
+        taskInput.dispatchEvent(new Event('input')); // Trigger input event
+    }
+    if (notesInput) {
+        notesInput.value = '';
+        notesInput.dispatchEvent(new Event('input'));
+    }
+    if (deadlineInput) {
+        deadlineInput.value = '';
+        deadlineInput.dispatchEvent(new Event('change'));
+    }
+    if (priorityInput) {
+        priorityInput.value = 'Sedang';
+        priorityInput.dispatchEvent(new Event('change'));
+    }
     
     // Clear draft
     clearDraft();
     
+    // Reset form element itself
+    if (taskForm) {
+        taskForm.reset();
+    }
+    
     // Focus back to task input
-    if (taskInput) taskInput.focus();
+    setTimeout(() => {
+        if (taskInput) taskInput.focus();
+    }, 50);
     
     console.log('Form reset completed');
 }
@@ -316,7 +337,7 @@ function formatDate(dateString) {
     } else if (date.getTime() === yesterday.getTime()) {
         return 'Kemarin';
     } else if (date < today) {
-        return `🚨 ${date.toLocaleDateString('id-ID')}`;
+        return `<svg class="w-4 h-4 inline mr-1 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.44L19.53 19H4.47L12 5.44z"/><path d="M11 10h2v4h-2zm0 6h2v2h-2z"/></svg>${date.toLocaleDateString('id-ID')}`;
     } else {
         return `<svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 11h2v2H7zm0 4h2v2H7zm4-4h2v2h-2zm0 4h2v2h-2zm4-4h2v2h-2zm0 4h2v2h-2z"/><path d="M5 22h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2zM19 8H5v12h14V8z"/></svg>${date.toLocaleDateString('id-ID')}`;
     }
@@ -688,8 +709,10 @@ async function addTask(e) {
         renderTasks(tasks);
         updateStatistics(tasks);
         
-        // Clear form and focus
-        resetTaskForm();
+        // Clear form and focus with delay to ensure proper reset
+        setTimeout(() => {
+            resetTaskForm();
+        }, 100);
         
         showNotification('Tugas disimpan offline! (Firebase connection issue)', 'warning');
         return;
@@ -725,8 +748,10 @@ async function addTask(e) {
         const docRef = await addDoc(tasksCollectionRef, newTask);
         console.log('TASK SAVED! ID:', docRef.id);
         
-        // Reset form and clear draft
-        resetTaskForm();
+        // Reset form and clear draft with small delay to ensure proper reset
+        setTimeout(() => {
+            resetTaskForm();
+        }, 100);
         showNotification('Tugas berhasil ditambahkan!', 'success');
         
     } catch (error) {
