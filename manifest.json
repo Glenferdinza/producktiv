@@ -1,0 +1,68 @@
+{
+  "name": "Producktiv - Task Manager by Glenferdinza",
+  "short_name": "Producktiv",
+  "description": "Modern task management app with Firebase backend by Glenferdinza",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1f2937",
+  "theme_color": "#8B5CF6",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "utilities", "business"],
+  "lang": "id",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "assets/icons/favicon-16x16.svg",
+      "sizes": "16x16",
+      "type": "image/svg+xml",
+      "purpose": "favicon"
+    },
+    {
+      "src": "assets/icons/favicon.svg",
+      "sizes": "32x32",
+      "type": "image/svg+xml",
+      "purpose": "favicon"
+    },
+    {
+      "src": "assets/icons/favicon-48x48.svg",
+      "sizes": "48x48",
+      "type": "image/svg+xml",
+      "purpose": "favicon"
+    },
+    {
+      "src": "assets/icons/favicon-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/favicon-192x192.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add New Task",
+      "short_name": "New Task",
+      "description": "Quickly add a new task",
+      "url": "/?action=new",
+      "icons": [
+        {
+          "src": "assets/icons/favicon-48x48.svg",
+          "sizes": "48x48",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/icons/favicon-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ]
+}
