@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productiv - Task Manager Pro</title>
+    <meta name="description" content="Modern task management app with Firebase backend. Manage tasks, set priorities, track progress with dark/light mode.">
+    <meta name="keywords" content="task manager, productivity, firebase, todo app, task tracking">
+    <meta name="author" content="Glenferdinza">
+    <meta property="og:title" content="Productiv - Task Manager Pro">
+    <meta property="og:description" content="Modern task management app with Firebase backend">
+    <meta property="og:url" content="https://glenferdinza.github.io/productiv">
+    <meta property="og:type" content="website">
+    <link rel="canonical" href="https://glenferdinza.github.io/productiv">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Configure Tailwind CSS dark mode - SIMPLE!
+        tailwind.config = {
+            darkMode: 'class'
+        }
+        console.log('Tailwind configured with dark mode!')
+    </script>
+    <link rel="stylesheet" href="src/css/styles.css">
+    <script>
+        // Set tema dari localStorage atau preferensi sistem sebelum halaman dimuat
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <div class="w-full max-w-5xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8 relative">
+        
+
+
+        <!-- Header -->
+        <header class="mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-100 text-center">Productiv</h1>
+            <p class="text-gray-500 dark:text-gray-400 text-center mt-2">Atur tugasmu dengan database, prioritas, dan deadline.</p>
+        </header>
+
+        <!-- Statistics Section -->
+        <section id="statistics" class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
+            <div class="bg-blue-50 dark:bg-gray-700/50 border-l-4 border-blue-500 dark:border-blue-400 p-5 rounded-lg shadow-md flex items-center gap-4">
+                <div class="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 dark:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg></div>
+                <div>
+                    <p class="text-sm font-medium text-blue-800 dark:text-blue-200">Total Tugas</p>
+                    <p id="total-tasks" class="text-2xl font-bold text-gray-800 dark:text-gray-100">0</p>
+                </div>
+            </div>
+            <!-- More stats cards here -->
+            <div class="bg-green-50 dark:bg-gray-700/50 border-l-4 border-green-500 dark:border-green-400 p-5 rounded-lg shadow-md flex items-center gap-4">
+                <div class="bg-green-100 dark:bg-green-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600 dark:text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                <div>
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">Selesai</p>
+                    <p id="completed-tasks" class="text-2xl font-bold text-gray-800 dark:text-gray-100">0</p>
+                </div>
+            </div>
+            <div class="bg-yellow-50 dark:bg-gray-700/50 border-l-4 border-yellow-500 dark:border-yellow-400 p-5 rounded-lg shadow-md flex items-center gap-4">
+                <div class="bg-yellow-100 dark:bg-yellow-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-600 dark:text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                <div>
+                    <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Tertunda</p>
+                    <p id="pending-tasks" class="text-2xl font-bold text-gray-800 dark:text-gray-100">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Progress Bar Section -->
+        <section class="mb-8">
+            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Progres Penyelesaian</h3>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                <div id="progress-bar" class="bg-green-600 h-2.5 rounded-full transition-all duration-500 w-0"></div>
+            </div>
+        </section>
+
+        <!-- Add Task Form -->
+        <section class="mb-8 p-6 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+            <form id="add-task-form" class="space-y-4">
+                <!-- Row 1: Task Input (Full width on mobile) -->
+                <div class="grid grid-cols-1 gap-4">
+                    <input type="text" id="task-input" placeholder="Tulis tugas baru di sini..." class="w-full px-4 py-3 bg-white dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                
+                <!-- Row 2: Notes (Optional) -->
+                <div class="grid grid-cols-1 gap-4">
+                    <textarea id="notes-input" placeholder="Catatan tambahan (opsional)" class="w-full px-4 py-3 bg-white dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" rows="2"></textarea>
+                </div>
+                
+                <!-- Row 3: Deadline and Priority (Responsive) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="date" id="deadline-input" title="Pilih deadline" class="w-full px-4 py-3 bg-white dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="priority-input" title="Pilih prioritas tugas" class="w-full px-4 py-3 bg-white dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 custom-select">
+                        <option value="Rendah">Rendah</option>
+                        <option value="Sedang" selected>Sedang</option>
+                        <option value="Tinggi">Tinggi</option>
+                    </select>
+                    <button type="submit" class="w-full bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19,13h-6v6a1,1,0,0,1-2,0V13H5a1,1,0,0,1,0-2h6V5a1,1,0,0,1,2,0v6h6a1,1,0,0,1,0,2Z"/>
+                        </svg>
+                        Tambah Tugas
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Task Table / Cards -->
+        <section>
+             <div id="loading-state" class="text-center py-10"><p class="dark:text-white">Memuat data...</p></div>
+            <div id="task-container" class="hidden">
+                <div class="hidden sm:block overflow-x-auto">
+                    <div class="min-w-full inline-block align-middle">
+                        <div class="overflow-hidden border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-100 dark:bg-gray-700">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M14,2H6A2,2,0,0,0,4,4V20a2,2,0,0,0,2,2H18a2,2,0,0,0,2-2V8ZM18,20H6V4h7V9a1,1,0,0,0,1,1h4Z"/>
+                                                </svg>
+                                                Tugas & Catatan
+                                            </div>
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M19,3H18V1a1,1,0,0,0-2,0V3H8V1A1,1,0,0,0,6,1V3H5A3,3,0,0,0,2,6V19a3,3,0,0,0,3,3H19a3,3,0,0,0,3-3V6A3,3,0,0,0,19,3ZM4,19V9H20V19a1,1,0,0,1-1,1H5A1,1,0,0,1,4,19Z"/>
+                                                </svg>
+                                                Deadline
+                                            </div>
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M12,2l3.09,6.26L22,9.27l-5,4.87L18.18,22,12,18.77,5.82,22,7,14.14,2,9.27l6.91-1.01Z"/>
+                                                </svg>
+                                                Prioritas
+                                            </div>
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M10.3,12.3a1,1,0,0,0,1.4,0L15.29,8.71a1,1,0,1,0-1.41-1.42L11,10.17,9.12,8.29a1,1,0,0,0-1.41,1.42ZM12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm0,18a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"/>
+                                                </svg>
+                                                Status
+                                            </div>
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            <div class="flex items-center justify-end gap-2">
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M22.61,2.39A1,1,0,0,0,22,2H16a1,1,0,0,0,0,2h3.59L12,11.59,4.41,4H8A1,1,0,0,0,8,2H2a1,1,0,0,0-.61.39,1,1,0,0,0-.39.61v6a1,1,0,0,0,2,0V5.41L11.59,14,4,21.59V18a1,1,0,0,0-2,0v6a1,1,0,0,0,.39.61A1,1,0,0,0,3,25H9a1,1,0,0,0,0-2H5.41L13,15.41,20.59,23H17a1,1,0,0,0,0,2h5a1,1,0,0,0,1-1V18a1,1,0,0,0-2,0v3.59L13.41,14,21,6.41V10a1,1,0,0,0,2,0V4A1,1,0,0,0,22.61,2.39Z"/>
+                                                </svg>
+                                                Aksi
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="task-list-desktop" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div id="task-list-mobile" class="sm:hidden grid grid-cols-1 gap-4"></div>
+                <div id="empty-state" class="hidden">
+                    <div class="px-6 py-16 text-center text-gray-500 dark:text-gray-400">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-200">Belum ada tugas</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Mulai dengan menambahkan tugas pertamamu.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Tips & Shortcuts -->
+        <section class="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div class="flex items-center gap-2 mb-2">
+                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12,2A7,7,0,0,0,5,9c0,5.25,3.99,8.5,7,8.5s7-3.25,7-8.5A7,7,0,0,0,12,2ZM9.74,15.32,8.32,13.9a8,8,0,0,1-1.57-5c0-4.42,4.48-8,10-8s10,3.58,10,8a8,8,0,0,1-1.57,5l-1.42,1.42A10,10,0,0,1,12,17.5,10,10,0,0,1,9.74,15.32Z"/>
+                </svg>
+                <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-200">Tips & Shortcuts</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-blue-700 dark:text-blue-300">
+                <div class="flex items-center gap-2">
+                    <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19,3H5A2,2,0,0,0,3,5V19a2,2,0,0,0,2,2H19a2,2,0,0,0,2-2V5A2,2,0,0,0,19,3ZM5,19V5H19V19Z"/>
+                        <path d="M6.5,6.5h3v3h-3ZM6.5,10.5h3v3h-3ZM6.5,14.5h3v3h-3ZM10.5,6.5h7v1h-7ZM10.5,10.5h7v1h-7ZM10.5,14.5h7v1h-7Z"/>
+                    </svg>
+                    <span><kbd class="bg-blue-200 dark:bg-blue-800 px-1 rounded">Ctrl+Enter</kbd> untuk menambah tugas cepat</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12,6V9l4-4L12,1V4A8,8,0,0,0,4,12a7.89,7.89,0,0,0,.4,2.48L6.13,13A6,6,0,0,1,12,6Zm0,12a6,6,0,0,1-6-6,5.91,5.91,0,0,1,.87-3L5.14,7.52A8,8,0,0,0,4,12a8,8,0,0,0,8,8v3l4-4-4-4Z"/>
+                    </svg>
+                    <span>Auto-save draft setiap 1 detik</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M7.5,2A5.5,5.5,0,0,0,2,7.5C2,11,7.5,18.5,7.5,18.5S13,11,13,7.5A5.5,5.5,0,0,0,7.5,2ZM7.5,10A2.5,2.5,0,1,1,10,7.5,2.5,2.5,0,0,1,7.5,10Z"/>
+                        <circle cx="16" cy="8" r="6"/>
+                    </svg>
+                    <span>Klik tombol di kanan atas untuk toggle theme</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17,19H7V5H17M17,1H7C5.89,1,5,1.89,5,3V21C5,22.1,5.9,23,7,23H17C18.1,23,17.9,22.1,17.9,21V3C17.9,1.89,17.1,1,17,1Z"/>
+                    </svg>
+                    <span>Layout otomatis menyesuaikan layar mobile</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Custom Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 transform transition-all">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-600">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19,7H16V6a3,3,0,0,0-3-3H11A3,3,0,0,0,8,6V7H5A1,1,0,0,0,5,9H6V19a3,3,0,0,0,3,3h6a3,3,0,0,0,3-3V9h1a1,1,0,0,0,0-2ZM10,6a1,1,0,0,1,1-1h2a1,1,0,0,1,1,1V7H10Zm6,13a1,1,0,0,1-1,1H9a1,1,0,0,1-1-1V9h8Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        Konfirmasi Hapus
+                    </h3>
+                </div>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="p-6">
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    Apakah Anda yakin ingin menghapus tugas ini? 
+                    <span class="text-red-600 dark:text-red-400 font-medium">Tindakan ini tidak dapat dibatalkan.</span>
+                </p>
+                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Tugas yang akan dihapus:</p>
+                    <p id="delete-task-preview" class="text-gray-900 dark:text-gray-100 font-medium"></p>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-600">
+                <button id="cancel-delete" 
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                    Batal
+                </button>
+                <button id="confirm-delete" 
+                        class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 rounded-md transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19,7H16V6a3,3,0,0,0-3-3H11A3,3,0,0,0,8,6V7H5A1,1,0,0,0,5,9H6V19a3,3,0,0,0,3,3h6a3,3,0,0,0,3-3V9h1a1,1,0,0,0,0-2ZM10,6a1,1,0,0,1,1-1h2a1,1,0,0,1,1,1V7H10Zm6,13a1,1,0,0,1-1,1H9a1,1,0,0,1-1-1V9h8Z"/>
+                    </svg>
+                    Hapus Tugas
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import JavaScript modules -->
+    <script type="module" src="src/js/app.js"></script>
+</body>
+</html>
+

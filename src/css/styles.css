@@ -1,0 +1,404 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Base styles */
+body { 
+    font-family: 'Inter', sans-serif; 
+}
+
+/* Custom select styling */
+.custom-select {
+    -webkit-appearance: none; 
+    -moz-appearance: none; 
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.25em 1.25em;
+    padding-right: 2.5rem;
+}
+
+/* Animations */
+@keyframes fadeIn { 
+    from { 
+        opacity: 0; 
+        transform: translateY(-10px); 
+    } 
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    } 
+}
+
+.new-task-animation { 
+    animation: fadeIn 0.5s ease-out forwards; 
+}
+
+/* Priority badge styles */
+.priority-high {
+    background-color: rgb(254 226 226);
+    color: rgb(153 27 27);
+    border-color: rgb(252 165 165);
+}
+
+.dark .priority-high {
+    background-color: rgb(127 29 29 / 0.5);
+    color: rgb(248 113 113);
+    border-color: rgb(239 68 68 / 0.5);
+}
+
+.priority-medium {
+    background-color: rgb(254 249 195);
+    color: rgb(146 64 14);
+    border-color: rgb(253 224 71);
+}
+
+.dark .priority-medium {
+    background-color: rgb(133 77 14 / 0.5);
+    color: rgb(253 224 71);
+    border-color: rgb(245 158 11 / 0.5);
+}
+
+.priority-low {
+    background-color: rgb(219 234 254);
+    color: rgb(30 64 175);
+    border-color: rgb(147 197 253);
+}
+
+.dark .priority-low {
+    background-color: rgb(30 58 138 / 0.5);
+    color: rgb(147 197 253);
+    border-color: rgb(59 130 246 / 0.5);
+}
+
+/* Status badge styles */
+.status-completed {
+    background-color: rgb(220 252 231);
+    color: rgb(22 101 52);
+    border-color: rgb(134 239 172);
+}
+
+.dark .status-completed {
+    background-color: rgb(20 83 45 / 0.5);
+    color: rgb(134 239 172);
+    border-color: rgb(34 197 94 / 0.5);
+}
+
+.status-pending {
+    background-color: rgb(243 244 246);
+    color: rgb(31 41 55);
+    border-color: rgb(209 213 219);
+}
+
+.dark .status-pending {
+    background-color: rgb(55 65 81);
+    color: rgb(209 213 219);
+    border-color: rgb(75 85 99);
+}
+
+/* Utility classes for completed tasks */
+.task-completed {
+    background-color: rgb(240 253 244 / 0.5);
+}
+
+.dark .task-completed {
+    background-color: rgb(20 83 45 / 0.2);
+}
+
+.task-text-completed {
+    color: rgb(156 163 175);
+    text-decoration: line-through;
+}
+
+.dark .task-text-completed {
+    color: rgb(107 114 128);
+}
+
+/* Hover effects */
+.hover-effect:hover {
+    background-color: rgb(249 250 251);
+}
+
+.dark .hover-effect:hover {
+    background-color: rgb(55 65 81 / 0.5);
+}
+
+/* Button hover effects */
+.btn-primary:hover {
+    transform: scale(1.05);
+}
+
+.btn-delete:hover {
+    color: rgb(220 38 38);
+    background-color: rgb(254 226 226);
+}
+
+.dark .btn-delete:hover {
+    background-color: rgb(127 29 29 / 0.5);
+}
+
+/* Theme toggle button */
+.theme-toggle {
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    transform: rotate(180deg);
+}
+
+/* Progress bar utilities */
+.w-0 { width: 0%; }
+.progress-bar-transition {
+    transition: width 0.5s ease-in-out;
+}
+
+/* Notification System */
+.notification {
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: slideInRight 0.3s ease-out forwards, fadeOut 0.3s ease-in 4.7s forwards;
+    min-width: 300px;
+    max-width: 400px;
+}
+
+.notification-success {
+    background-color: rgb(34 197 94);
+    color: white;
+}
+
+.notification-error {
+    background-color: rgb(239 68 68);
+    color: white;
+}
+
+.notification-info {
+    background-color: rgb(59 130 246);
+    color: white;
+}
+
+.notification-warning {
+    background-color: rgb(245 158 11);
+    color: white;
+}
+
+.dark .notification {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* Auto-save indicator */
+.auto-save-indicator {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    background-color: rgb(34 197 94);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+}
+
+.auto-save-indicator.show {
+    opacity: 1;
+}
+
+.dark .auto-save-indicator {
+    background-color: rgb(22 163 74);
+}
+
+/* Enhanced mobile layout */
+@media (max-width: 768px) {
+    .mobile-stack > * {
+        margin-bottom: 0.75rem;
+    }
+    
+    .mobile-stack > *:last-child {
+        margin-bottom: 0;
+    }
+    
+    /* Better mobile form */
+    .mobile-form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    /* Mobile task cards optimization */
+    .task-card-mobile {
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .task-card-mobile:last-child {
+        margin-bottom: 0;
+    }
+}
+
+/* Loading states */
+.loading-spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Better focus states */
+input:focus, select:focus, textarea:focus, button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Enhanced hover effects */
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Light Theme Base Styles */
+html:not(.dark) {
+    background-color: #f8fafc;
+    color: #1f2937;
+}
+
+html:not(.dark) body {
+    background-color: #f9fafb;
+    color: #374151;
+}
+
+/* Light theme card backgrounds */
+html:not(.dark) .bg-white {
+    background-color: #ffffff !important;
+}
+
+html:not(.dark) .bg-gray-50 {
+    background-color: #f9fafb !important;
+}
+
+html:not(.dark) .bg-gray-100 {
+    background-color: #f3f4f6 !important;
+}
+
+/* Light theme text colors */
+html:not(.dark) .text-gray-800 {
+    color: #1f2937 !important;
+}
+
+html:not(.dark) .text-gray-700 {
+    color: #374151 !important;
+}
+
+html:not(.dark) .text-gray-600 {
+    color: #4b5563 !important;
+}
+
+/* Light theme borders */
+html:not(.dark) .border-gray-200 {
+    border-color: #e5e7eb !important;
+}
+
+html:not(.dark) .border-gray-300 {
+    border-color: #d1d5db !important;
+}
+
+/* Light theme button backgrounds */
+html:not(.dark) .bg-blue-600 {
+    background-color: #2563eb !important;
+}
+
+html:not(.dark) .hover\:bg-blue-700:hover {
+    background-color: #1d4ed8 !important;
+}
+
+/* Ensure theme toggle button is visible in light mode */
+html:not(.dark) #theme-toggle {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border-color: #e5e7eb !important;
+    color: #4b5563 !important;
+}
+
+html:not(.dark) #theme-toggle:hover {
+    background-color: #f3f4f6 !important;
+}
+
+/* Custom Modal Animations */
+#delete-modal {
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease-out;
+}
+
+#delete-modal > div {
+    transform: scale(0.95);
+    transition: transform 0.2s ease-out;
+}
+
+#delete-modal:not(.hidden) > div {
+    transform: scale(1);
+}
+
+/* Modal fade in animation */
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        -webkit-backdrop-filter: blur(0px);
+        backdrop-filter: blur(0px);
+    }
+    to {
+        opacity: 1;
+        -webkit-backdrop-filter: blur(4px);
+        backdrop-filter: blur(4px);
+    }
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: scale(0.95) translateY(-10px);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+#delete-modal:not(.hidden) {
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+#delete-modal:not(.hidden) > div {
+    animation: modalSlideIn 0.2s ease-out;
+}
