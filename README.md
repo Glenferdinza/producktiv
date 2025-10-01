@@ -3,7 +3,8 @@
 Web hasil orang gabut😴.
 
 Anw cek firebase rulesnya dlu guys di file docsnya biar lebih secure wkwk
-Cek : Link[https://github.com/Glenferdinza/producktiv/blob/main/docs/firebase-troubleshooting.js]
+Cek : (Link)[https://github.com/Glenferdinza/producktiv/blob/main/docs/firebase-troubleshooting.js]
+
 ## Fitur
 
 - Tambah, edit, dan hapus tugas
