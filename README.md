@@ -2,6 +2,8 @@
 
 Aplikasi manajemen tugas yang modern dan responsif dengan Firebase sebagai database backend.
 
+Anw cek firebase rulesnya dlu guys di file docsnya biar lebih secure wkwk
+
 ## Fitur
 
 - Tambah, edit, dan hapus tugas
